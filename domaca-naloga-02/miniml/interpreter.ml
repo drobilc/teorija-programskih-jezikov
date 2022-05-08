@@ -53,15 +53,17 @@ let rec eval_exp = function
 and eval_int e =
   match eval_exp e with S.Int n -> n | _ -> failwith "Integer expected"
 
-let is_value = function
-  | S.Int _ | S.Bool _ | S.Lambda _ | S.RecLambda _ -> true
+let rec is_value = function
+  | S.Int _ | S.Bool _ | S.Lambda _ | S.RecLambda _ | S.Nil -> true
+  | S.Cons (x, xs) -> (is_value x) && (is_value xs)
+  | S.Pair (fst, snd) -> (is_value fst) && (is_value snd)
   | S.Var _ | S.Plus _ | S.Minus _ | S.Times _ | S.Equal _ | S.Less _
-  | S.Greater _ | S.IfThenElse _ | S.Apply _ ->
+  | S.Greater _ | S.IfThenElse _ | S.Apply _
+  | S.Match _ | Fst _ | Snd _ ->
       false
-  | _ -> failwith "TODO"
 
 let rec step = function
-  | S.Var _ | S.Int _ | S.Bool _ | S.Lambda _ | S.RecLambda _ ->
+  | S.Var _ | S.Int _ | S.Bool _ | S.Lambda _ | S.RecLambda _ | S.Nil ->
       failwith "Expected a non-terminal expression"
   | S.Plus (S.Int n1, S.Int n2) -> S.Int (n1 + n2)
   | S.Plus (S.Int n1, e2) -> S.Plus (S.Int n1, step e2)
@@ -88,7 +90,17 @@ let rec step = function
       S.subst_exp [ (f, rec_f); (x, v) ] e
   | S.Apply (((S.Lambda _ | S.RecLambda _) as f), e) -> S.Apply (f, step e)
   | S.Apply (e1, e2) -> S.Apply (step e1, e2)
-  | _ -> failwith "TODO"
+  | S.Pair (e1, e2) when is_value e1 -> S.Pair (e1, step e2)
+  | S.Pair (e1, e2) -> S.Pair (step e1, e2)
+  | S.Fst (S.Pair (fst, _)) -> fst
+  | S.Fst e -> S.Fst (step e)
+  | S.Snd (S.Pair (_, snd)) -> snd
+  | S.Snd e -> S.Snd (step e)
+  | S.Cons (e1, e2) when is_value e1 -> S.Cons (e1, step e2)
+  | S.Cons (e1, e2) -> S.Cons (step e1, e2)
+  | S.Match (S.Nil, e1, _, _, _) -> e1
+  | S.Match (S.Cons (head, tail), _, x, xs, e2) -> S.subst_exp [ (x, head) ; (xs, tail) ] e2
+  | S.Match (e, e1, x, xs, e2) -> S.Match (step e, e1, x, xs, e2)
 
 let big_step e =
   let v = eval_exp e in
