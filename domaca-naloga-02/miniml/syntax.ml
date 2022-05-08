@@ -93,7 +93,9 @@ let rec subst_exp sbst = function
   | Snd e -> Snd (subst_exp sbst e)
   | Nil -> Nil
   | Cons (head, tail) -> Cons (subst_exp sbst head, subst_exp sbst tail)
-  | Match (e, e1, x, xs, e2) -> Match (subst_exp sbst e, subst_exp sbst e1, x, xs, subst_exp sbst e2)
+  | Match (e, e1, x, xs, e2) ->
+      let sbst' = List.remove_assoc xs (List.remove_assoc x sbst) in
+      Match (subst_exp sbst e, subst_exp sbst e1, x, xs, subst_exp sbst' e2)
 
 let string_of_ident (Ident x) = x
 
