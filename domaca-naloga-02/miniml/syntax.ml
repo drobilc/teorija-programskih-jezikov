@@ -93,8 +93,7 @@ let rec subst_exp sbst = function
   | Snd e -> Snd (subst_exp sbst e)
   | Nil -> Nil
   | Cons (head, tail) -> Cons (subst_exp sbst head, subst_exp sbst tail)
-  (*| Match of exp * exp * ident * ident * exp*)
-  | _ -> failwith "TODO"
+  | Match (e, e1, x, xs, e2) -> Match (subst_exp sbst e, subst_exp sbst e1, x, xs, subst_exp sbst e2)
 
 let string_of_ident (Ident x) = x
 
@@ -115,6 +114,10 @@ and string_of_exp2 = function
   | Plus (e1, e2) -> string_of_exp1 e1 ^ " + " ^ string_of_exp1 e2
   | Minus (e1, e2) -> string_of_exp1 e1 ^ " - " ^ string_of_exp1 e2
   | Times (e1, e2) -> string_of_exp1 e1 ^ " * " ^ string_of_exp1 e2
+  | Fst e -> "FST " ^ (string_of_exp1 e)
+  | Snd e -> "SND " ^ (string_of_exp1 e)
+  | Match (e, e1, x, xs, e2) ->
+      "MATCH " ^ (string_of_exp1 e) ^ " WITH | [] -> " ^ (string_of_exp1 e1) ^ " | " ^ (string_of_ident x) ^ " :: " ^ (string_of_ident xs) ^ " -> " ^ (string_of_exp1 e2)
   | e -> string_of_exp1 e
 
 and string_of_exp1 = function
@@ -125,6 +128,9 @@ and string_of_exp0 = function
   | Int n -> string_of_int n
   | Bool b -> if b then "TRUE" else "FALSE"
   | Var x -> string_of_ident x
+  | Pair (e1, e2) -> "{" ^ (string_of_exp3 e1) ^ ", " ^ (string_of_exp3 e2) ^"}"
+  | Nil -> "[]"
+  | Cons (e1, e2) -> (string_of_exp3 e1) ^ " :: " ^ (string_of_exp3 e2)
   | e -> "(" ^ string_of_exp3 e ^ ")"
 
 let string_of_exp = string_of_exp3
