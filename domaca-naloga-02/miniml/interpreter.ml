@@ -33,7 +33,22 @@ let rec eval_exp = function
       | S.RecLambda (f, x, e) as rec_f ->
           eval_exp (S.subst_exp [ (f, rec_f); (x, v) ] e)
       | _ -> failwith "Function expected")
-  | _ -> failwith "TODO"
+  | S.Nil -> S.Nil
+  | S.Cons (e1, e2) -> S.Cons(eval_exp e1, eval_exp e2)
+  | S.Pair (e1, e2) -> S.Pair(eval_exp e1, eval_exp e2)
+  | S.Fst e -> (
+      match eval_exp e with
+      | S.Pair (fst, _) -> fst
+      | _ -> failwith "Pair expected")
+  | S.Snd e -> (
+      match eval_exp e with
+      | S.Pair (_, snd) -> snd
+      | _ -> failwith "Pair expected")
+  | S.Match (e, e1, x, xs, e2) -> (
+      match eval_exp e with
+        | S.Nil -> eval_exp e1
+        | S.Cons (head, tail) -> eval_exp (S.subst_exp [ (x, head); (xs, tail) ] e2)
+        | _ -> failwith "List expected")
 
 and eval_int e =
   match eval_exp e with S.Int n -> n | _ -> failwith "Integer expected"
