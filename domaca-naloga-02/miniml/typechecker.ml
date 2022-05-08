@@ -55,8 +55,12 @@ let rec infer_exp ctx = function
       let ty2, eqs2 = infer_exp ctx e2 in
       let alpha = fresh_ty () in
       (ListTy alpha, ((ty1, alpha) :: (ty2, ListTy alpha) :: eqs1) @ eqs2)
-  (*| Match of exp * exp * ident * ident * exp*)
-  | _ -> failwith "TODO"
+  | Match (e, e1, x, xs, e2) ->
+      let ty, eqs = infer_exp ctx e in
+      let alpha = fresh_ty () in
+      let ty1, eqs1 = infer_exp ctx e1 in
+      let ty2, eqs2 = infer_exp ((x, alpha) :: (xs, ListTy alpha) :: ctx) e2 in
+      (ty1 , (((ty, ListTy alpha) :: (ty1, ty2) :: eqs) @ eqs1) @ eqs2)
 
 let subst_eqs sbst eqs =
   List.map (fun (ty1, ty2) -> (subst_ty sbst ty1, subst_ty sbst ty2)) eqs
