@@ -18,13 +18,15 @@ let rec occurs p = function
   | IntTy | BoolTy -> false
   | ArrowTy (ty1, ty2) -> occurs p ty1 || occurs p ty2
   | ParamTy p' -> p = p'
-  | _ -> failwith "TODO"
+  | ProdTy (ty1, ty2) -> occurs p ty1 || occurs p ty2
+  | ListTy ty -> occurs p ty
 
 let rec subst_ty sbst = function
   | (IntTy | BoolTy) as ty -> ty
   | ArrowTy (ty1, ty2) -> ArrowTy (subst_ty sbst ty1, subst_ty sbst ty2)
   | ParamTy p as ty -> List.assoc_opt p sbst |> Option.value ~default:ty
-  | _ -> failwith "TODO"
+  | ProdTy (ty1, ty2) -> ProdTy (subst_ty sbst ty1, subst_ty sbst ty2)
+  | ListTy ty -> ListTy (subst_ty sbst ty)
 
 let fresh_ty () = ParamTy (fresh_param ())
 
@@ -36,7 +38,9 @@ let rec string_of_ty = function
   | ArrowTy (ty1, ty2) ->
       "(" ^ string_of_ty ty1 ^ " -> " ^ string_of_ty ty2 ^ ")"
   | ParamTy p -> string_of_param p
-  | _ -> failwith "TODO"
+  | ProdTy (ty1, ty2) ->
+      "(" ^ string_of_ty ty1 ^ " * " ^ string_of_ty ty2 ^ ")"
+  | ListTy ty -> (string_of_ty ty) ^ " list"
 
 type ident = Ident of string
 
@@ -84,6 +88,12 @@ let rec subst_exp sbst = function
       let sbst' = List.remove_assoc f (List.remove_assoc x sbst) in
       RecLambda (f, x, subst_exp sbst' e)
   | Apply (e1, e2) -> Apply (subst_exp sbst e1, subst_exp sbst e2)
+  | Pair (e1, e2) -> Pair (subst_exp sbst e1, subst_exp sbst e2)
+  | Fst e -> Fst (subst_exp sbst e)
+  | Snd e -> Snd (subst_exp sbst e)
+  | Nil -> Nil
+  | Cons (head, tail) -> Cons (subst_exp sbst head, subst_exp sbst tail)
+  (*| Match of exp * exp * ident * ident * exp*)
   | _ -> failwith "TODO"
 
 let string_of_ident (Ident x) = x

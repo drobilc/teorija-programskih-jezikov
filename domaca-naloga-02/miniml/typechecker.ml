@@ -33,6 +33,29 @@ let rec infer_exp ctx = function
       let ty2, eqs2 = infer_exp ctx e2 in
       let alpha = fresh_ty () in
       (alpha, ((ty1, ArrowTy (ty2, alpha)) :: eqs1) @ eqs2)
+  | Pair (e1, e2) ->
+      let ty1, eqs1 = infer_exp ctx e1 in
+      let ty2, eqs2 = infer_exp ctx e2 in
+      (ProdTy (ty1, ty2), eqs1 @ eqs2)
+  | Fst e ->
+      let ty, eqs = infer_exp ctx e in
+      let alpha = fresh_ty () in
+      let beta = fresh_ty () in
+      (alpha, (ty, ProdTy (alpha, beta)) :: eqs)
+  | Snd e ->
+      let ty, eqs = infer_exp ctx e in
+      let alpha = fresh_ty () in
+      let beta = fresh_ty () in
+      (beta, (ty, ProdTy (alpha, beta)) :: eqs)
+  | Nil ->
+      let alpha = fresh_ty () in
+      (ListTy alpha, [])
+  | Cons (e1, e2) ->
+      let ty1, eqs1 = infer_exp ctx e1 in
+      let ty2, eqs2 = infer_exp ctx e2 in
+      let alpha = fresh_ty () in
+      (ListTy alpha, ((ty1, alpha) :: (ty2, ListTy alpha) :: eqs1) @ eqs2)
+  (*| Match of exp * exp * ident * ident * exp*)
   | _ -> failwith "TODO"
 
 let subst_eqs sbst eqs =
@@ -52,6 +75,10 @@ let rec unify = function
   | (ty, ParamTy p) :: eqs when not (occurs p ty) ->
       let subst = unify (subst_eqs [ (p, ty) ] eqs) in
       compose_subst [ (p, subst_ty subst ty) ] subst
+  | (ProdTy (ty1, ty2), ProdTy (ty1', ty2')) :: eqs ->
+      unify ((ty1, ty1') :: (ty2, ty2') :: eqs)
+  | (ListTy ty, ListTy ty') :: eqs ->
+      unify ((ty, ty') :: eqs)
   | (ty1, ty2) :: _ ->
       failwith
         ("Cannot unify types " ^ string_of_ty ty1 ^ " and " ^ string_of_ty ty2
