@@ -1,0 +1,23 @@
+format: jb-book
+root: 00-uvod.md
+parts:
+- caption: Osnove
+  chapters:
+  - file: 01-praksa-programskih-jezikov.md
+  - file: 03-indukcija.md
+- caption: Metateorija
+  chapters:
+  - file: 04-metateorija-programskih-jezikov.md
+  - file: 05-lambda-racun.md
+  - file: 06-tipi.md
+  - file: 07-izpeljava-tipov.md
+- caption: Denotacijska semantika
+  chapters:
+  - file: 10-denotacijska-semantika
+  - file: 11-domene
+- caption: Učinki
+  chapters:
+  - file: 08-racunski-ucinki
+  - file: 12-monade
+  - file: 13-algebrajski-ucinki
+  - file: 14-prestrezniki-ucinkov
